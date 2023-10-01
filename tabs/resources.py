@@ -21,6 +21,7 @@ import requests
 import wget
 import ffmpeg
 import hashlib
+
 current_script_path = os.path.abspath(__file__)
 script_parent_directory = os.path.dirname(current_script_path)
 now_dir = os.path.dirname(script_parent_directory)
@@ -95,13 +96,18 @@ def calculate_md5(file_path):
         for chunk in iter(lambda: f.read(4096), b""):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
+
+
 import unicodedata
 
+
 def format_title(title):
-    formatted_title = unicodedata.normalize('NFKD', title).encode('ascii', 'ignore').decode('utf-8')
-    formatted_title = re.sub(r'[\u2500-\u257F]+', '', title)
-    formatted_title = re.sub(r'[^\w\s-]', '', title)
-    formatted_title = re.sub(r'\s+', '_', formatted_title)
+    formatted_title = (
+        unicodedata.normalize("NFKD", title).encode("ascii", "ignore").decode("utf-8")
+    )
+    formatted_title = re.sub(r"[\u2500-\u257F]+", "", title)
+    formatted_title = re.sub(r"[^\w\s-]", "", title)
+    formatted_title = re.sub(r"\s+", "_", formatted_title)
     return formatted_title
 
 
@@ -142,21 +148,26 @@ def find_folder_parent(search_dir, folder_name):
             return os.path.abspath(dirpath)
     return None
 
+
 file_path = find_folder_parent(now_dir, "assets")
 tmp = os.path.join(file_path, "temp")
 shutil.rmtree(tmp, ignore_errors=True)
 os.environ["temp"] = tmp
 
+
 def get_mediafire_download_link(url):
     response = requests.get(url)
     response.raise_for_status()
-    soup = BeautifulSoup(response.text, 'html.parser')
-    download_button = soup.find('a', {'class': 'input popsok', 'aria-label': 'Download file'})
+    soup = BeautifulSoup(response.text, "html.parser")
+    download_button = soup.find(
+        "a", {"class": "input popsok", "aria-label": "Download file"}
+    )
     if download_button:
-        download_link = download_button.get('href')
+        download_link = download_button.get("href")
         return download_link
     else:
         return None
+
 
 def download_from_url(url):
     file_path = find_folder_parent(now_dir, "assets")
@@ -195,23 +206,33 @@ def download_from_url(url):
             os.chdir(zips_path)
             if "/blob/" in url:
                 url = url.replace("/blob/", "/resolve/")
-            
+
             response = requests.get(url, stream=True)
             if response.status_code == 200:
                 file_name = url.split("/")[-1]
                 file_name = file_name.replace("%20", "_")
-                total_size_in_bytes = int(response.headers.get('content-length', 0))
+                total_size_in_bytes = int(response.headers.get("content-length", 0))
                 block_size = 1024  # 1 Kibibyte
                 progress_bar_length = 50
                 progress = 0
-                with open(os.path.join(zips_path, file_name), 'wb') as file:
+                with open(os.path.join(zips_path, file_name), "wb") as file:
                     for data in response.iter_content(block_size):
                         file.write(data)
                         progress += len(data)
                         progress_percent = int((progress / total_size_in_bytes) * 100)
-                        num_dots = int((progress / total_size_in_bytes) * progress_bar_length)
-                        progress_bar = "[" + "." * num_dots + " " * (progress_bar_length - num_dots) + "]"
-                        print(f"{progress_percent}% {progress_bar} {progress}/{total_size_in_bytes}  ", end="\r")
+                        num_dots = int(
+                            (progress / total_size_in_bytes) * progress_bar_length
+                        )
+                        progress_bar = (
+                            "["
+                            + "." * num_dots
+                            + " " * (progress_bar_length - num_dots)
+                            + "]"
+                        )
+                        print(
+                            f"{progress_percent}% {progress_bar} {progress}/{total_size_in_bytes}  ",
+                            end="\r",
+                        )
                         if progress_percent == 100:
                             print("\n")
             else:
@@ -248,9 +269,7 @@ def download_from_url(url):
             os.chdir("./assets/zips")
             if file.status_code == 200:
                 name = url.split("/")
-                with open(
-                    os.path.join(name[-1]), "wb"
-                ) as newfile:
+                with open(os.path.join(name[-1]), "wb") as newfile:
                     newfile.write(file.content)
             else:
                 return None
@@ -286,11 +305,11 @@ def download_from_url(url):
             else:
                 return None
         elif "www.weights.gg" in url:
-            #Pls weights creator dont fix this because yes. c:
+            # Pls weights creator dont fix this because yes. c:
             url_parts = url.split("/")
             weights_gg_index = url_parts.index("www.weights.gg")
             if weights_gg_index != -1 and weights_gg_index < len(url_parts) - 1:
-                model_part = "/".join(url_parts[weights_gg_index + 1:])
+                model_part = "/".join(url_parts[weights_gg_index + 1 :])
                 if "models" in model_part:
                     model_part = model_part.split("models/")[-1]
                     print(model_part)
@@ -299,7 +318,10 @@ def download_from_url(url):
                         response = requests.get(download_url)
                         if response.status_code == 200:
                             soup = BeautifulSoup(response.text, "html.parser")
-                            button_link = soup.find("a", class_="bg-black text-white px-3 py-2 rounded-lg flex items-center gap-1")
+                            button_link = soup.find(
+                                "a",
+                                class_="bg-black text-white px-3 py-2 rounded-lg flex items-center gap-1",
+                            )
                             if button_link:
                                 download_link = button_link["href"]
                                 result = download_from_url(download_link)
@@ -427,14 +449,19 @@ def get_vc(sid, to_return_protect0, to_return_protect1):
         to_return_protect0,
         to_return_protect1,
     )
+
+
 import zipfile
 from tqdm import tqdm
 
+
 def extract_and_show_progress(zipfile_path, unzips_path):
     try:
-        with zipfile.ZipFile(zipfile_path, 'r') as zip_ref:
+        with zipfile.ZipFile(zipfile_path, "r") as zip_ref:
             total_files = len(zip_ref.infolist())
-            with tqdm(total=total_files, unit='files', ncols= 100, colour= 'green') as pbar:
+            with tqdm(
+                total=total_files, unit="files", ncols=100, colour="green"
+            ) as pbar:
                 for file_info in zip_ref.infolist():
                     zip_ref.extract(file_info, unzips_path)
                     pbar.update(1)
@@ -442,7 +469,7 @@ def extract_and_show_progress(zipfile_path, unzips_path):
     except Exception as e:
         print(f"Error al descomprimir {zipfile_path}: {e}")
         return False
-    
+
 
 def load_downloaded_model(url):
     parent_path = find_folder_parent(now_dir, "assets")
@@ -482,14 +509,14 @@ def load_downloaded_model(url):
                 zipfile_path = os.path.join(zips_path, filename)
                 print(i18n("Proceeding with the extraction..."))
                 infos.append(i18n("Proceeding with the extraction..."))
-                #shutil.unpack_archive(zipfile_path, unzips_path, "zip")
+                # shutil.unpack_archive(zipfile_path, unzips_path, "zip")
                 model_name = os.path.basename(zipfile_path)
                 logs_dir = os.path.join(
                     parent_path,
                     "logs",
                     os.path.normpath(str(model_name).replace(".zip", "")),
                 )
-                
+
                 yield "\n".join(infos)
                 success = extract_and_show_progress(zipfile_path, unzips_path)
                 if success:
@@ -567,7 +594,6 @@ def load_downloaded_model(url):
             print(i18n("No relevant file was found to upload."))
             infos.append(i18n("No relevant file was found to upload."))
             yield "\n".join(infos)
-        
 
         if os.path.exists(zips_path):
             shutil.rmtree(zips_path)
@@ -701,21 +727,21 @@ def load_dowloaded_dataset(url):
 
 SAVE_ACTION_CONFIG = {
     i18n("Save all"): {
-        'destination_folder': "manual_backup",
-        'copy_files': True,  # "Save all" Copy all files and folders
-        'include_weights': False
+        "destination_folder": "manual_backup",
+        "copy_files": True,  # "Save all" Copy all files and folders
+        "include_weights": False,
     },
     i18n("Save D and G"): {
-        'destination_folder': "manual_backup",
-        'copy_files': False,  # "Save D and G" Do not copy everything, only specific files
-        'files_to_copy': ["D_*.pth", "G_*.pth", "added_*.index"],
-        'include_weights': True,
+        "destination_folder": "manual_backup",
+        "copy_files": False,  # "Save D and G" Do not copy everything, only specific files
+        "files_to_copy": ["D_*.pth", "G_*.pth", "added_*.index"],
+        "include_weights": True,
     },
     i18n("Save voice"): {
-        'destination_folder': "finished",
-        'copy_files': False,  # "Save voice" Do not copy everything, only specific files
-        'files_to_copy': ["added_*.index"],
-        'include_weights': True,
+        "destination_folder": "finished",
+        "copy_files": False,  # "Save voice" Do not copy everything, only specific files
+        "files_to_copy": ["added_*.index"],
+        "include_weights": True,
     },
 }
 
@@ -741,7 +767,7 @@ def save_model(modelname, save_action):
         parent_path = find_folder_parent(now_dir, "assets")
         weight_path = os.path.join(parent_path, "logs", "weights", f"{modelname}.pth")
         logs_path = os.path.join(parent_path, "logs", modelname)
-        save_folder = SAVE_ACTION_CONFIG[save_action]['destination_folder']
+        save_folder = SAVE_ACTION_CONFIG[save_action]["destination_folder"]
         save_path = os.path.join(parent_path, "logs", save_folder, modelname + ".zip")
         infos = []
 
@@ -752,37 +778,47 @@ def save_model(modelname, save_action):
             raise Exception(f"The logs directory '{logs_path}' does not exist.")
 
         # Realizar las acciones según la opción seleccionada
-        if SAVE_ACTION_CONFIG[save_action]['copy_files']:
+        if SAVE_ACTION_CONFIG[save_action]["copy_files"]:
             # Option: Copy all files and folders
             infos.append(save_action)
             print(save_action)
             yield "\n".join(infos)
-            with zipfile.ZipFile(save_path, 'w') as zipf:
+            with zipfile.ZipFile(save_path, "w") as zipf:
                 for root, _, files in os.walk(logs_path):
                     for file in files:
                         file_path = os.path.join(root, file)
                         # Create a folder with the model name in the ZIP
                         model_folder = os.path.join(modelname, "")
-                        zipf.write(file_path, os.path.join(model_folder, os.path.relpath(file_path, logs_path)))
-                zipf.write(weight_path, os.path.join(model_folder, os.path.basename(weight_path)))
-        
+                        zipf.write(
+                            file_path,
+                            os.path.join(
+                                model_folder, os.path.relpath(file_path, logs_path)
+                            ),
+                        )
+                zipf.write(
+                    weight_path,
+                    os.path.join(model_folder, os.path.basename(weight_path)),
+                )
+
         else:
             # Option: Copy specific files
             infos.append(save_action)
             print(save_action)
             yield "\n".join(infos)
-            files_to_copy = SAVE_ACTION_CONFIG[save_action]['files_to_copy']
-            with zipfile.ZipFile(save_path, 'w') as zipf:
+            files_to_copy = SAVE_ACTION_CONFIG[save_action]["files_to_copy"]
+            with zipfile.ZipFile(save_path, "w") as zipf:
                 for root, _, files in os.walk(logs_path):
                     for file in files:
                         for pattern in files_to_copy:
                             if fnmatch.fnmatch(file, pattern):
                                 file_path = os.path.join(root, file)
-                                zipf.write(file_path, os.path.relpath(file_path, logs_path))
+                                zipf.write(
+                                    file_path, os.path.relpath(file_path, logs_path)
+                                )
 
-        if SAVE_ACTION_CONFIG[save_action]['include_weights']:
+        if SAVE_ACTION_CONFIG[save_action]["include_weights"]:
             # Include the weight file in the ZIP
-            with zipfile.ZipFile(save_path, 'a') as zipf:
+            with zipfile.ZipFile(save_path, "a") as zipf:
                 zipf.write(weight_path, os.path.basename(weight_path))
 
         infos.append(i18n("The model has been saved successfully."))
@@ -793,6 +829,7 @@ def save_model(modelname, save_action):
         error_message = str(e)
         print(f"Error: {error_message}")
         yield error_message
+
 
 def load_downloaded_backup(url):
     parent_path = find_folder_parent(now_dir, "assets")
@@ -905,10 +942,10 @@ def save_to_wav(record_button):
 
 def change_choices2():
     audio_paths = [
-    os.path.join(root, name)
-    for root, _, files in os.walk(audio_root, topdown=False)
-    for name in files
-    if name.endswith(tuple(sup_audioext)) and root == audio_root
+        os.path.join(root, name)
+        for root, _, files in os.walk(audio_root, topdown=False)
+        for name in files
+        if name.endswith(tuple(sup_audioext)) and root == audio_root
     ]
     return {"choices": sorted(audio_paths), "__type__": "update"}, {
         "__type__": "update"
@@ -1327,32 +1364,42 @@ def update_model_choices(select_value):
 
 
 def save_drop_model_pth(dropbox):
-    file_path = dropbox.name 
+    file_path = dropbox.name
     file_name = os.path.basename(file_path)
     target_path = os.path.join("logs", "weights", os.path.basename(file_path))
-    
-    if not file_name.endswith('.pth'):
-        print(i18n("The file does not have the .pth extension. Please upload the correct file."))
+
+    if not file_name.endswith(".pth"):
+        print(
+            i18n(
+                "The file does not have the .pth extension. Please upload the correct file."
+            )
+        )
         return None
-    
+
     shutil.move(file_path, target_path)
     return target_path
 
+
 def extract_folder_name(file_name):
-    match = re.search(r'nprobe_(.*?)\.index', file_name)
-    
+    match = re.search(r"nprobe_(.*?)\.index", file_name)
+
     if match:
         return match.group(1)
     else:
         return
+
 
 def save_drop_model_index(dropbox):
     file_path = dropbox.name
     file_name = os.path.basename(file_path)
     folder_name = extract_folder_name(file_name)
 
-    if not file_name.endswith('.index'):
-        print(i18n("The file does not have the .index extension. Please upload the correct file."))
+    if not file_name.endswith(".index"):
+        print(
+            i18n(
+                "The file does not have the .index extension. Please upload the correct file."
+            )
+        )
         return None
 
     out_path = os.path.join("logs", folder_name)
@@ -1378,7 +1425,7 @@ def download_model():
             inputs=[model_url],
             outputs=[download_model_status_bar],
         )
-    gr.Markdown(value=i18n("You can also drop your files to load your model."))    
+    gr.Markdown(value=i18n("You can also drop your files to load your model."))
     with gr.Row():
         dropbox_pth = gr.File(label=i18n("Drag your .pth file here:"))
         dropbox_index = gr.File(label=i18n("Drag your .index file here:"))
@@ -1414,11 +1461,7 @@ def update_dataset_list(name):
     file_path = find_folder_parent(now_dir, "assets")
     for foldername in os.listdir("./datasets"):
         if "." not in foldername:
-            new_datasets.append(
-                os.path.join(
-                    file_path, "datasets", foldername
-                )
-            )
+            new_datasets.append(os.path.join(file_path, "datasets", foldername))
     return gr.Dropdown.update(choices=new_datasets)
 
 
@@ -1517,7 +1560,9 @@ def youtube_separator():
                 )
             opt_ins_root = gr.Textbox(
                 label=i18n("Specify the output folder for accompaniment:"),
-                value=((os.getcwd()).replace("\\", "/") + "/assets/audios/audio-others"),
+                value=(
+                    (os.getcwd()).replace("\\", "/") + "/assets/audios/audio-others"
+                ),
             )
             dir_wav_input = gr.Textbox(
                 label=i18n("Enter the path of the audio folder to be processed:"),
@@ -1574,5 +1619,3 @@ def youtube_separator():
         inputs=[advanced_settings_checkbox],
         outputs=[advanced_settings],
     )
-
-

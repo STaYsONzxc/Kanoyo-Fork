@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from assets.configs.config import Config
 from assets.i18n.i18n import I18nAuto
 from lib.infer.modules.vc.pipeline import Pipeline
+
 VC = Pipeline
 
 logging.getLogger("numba").setLevel(logging.WARNING)
@@ -17,7 +18,7 @@ logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 i18n = I18nAuto()
-#(i18n)
+# (i18n)
 
 load_dotenv()
 config = Config()

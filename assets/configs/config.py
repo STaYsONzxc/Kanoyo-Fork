@@ -1,16 +1,19 @@
 import argparse
 import getpass
 import sys
-sys.path.append('..')
+
+sys.path.append("..")
 import json
 from multiprocessing import cpu_count
 
 import torch
 
 try:
-    import intel_extension_for_pytorch as ipex # pylint: disable=import-error, unused-import
+    import intel_extension_for_pytorch as ipex  # pylint: disable=import-error, unused-import
+
     if torch.xpu.is_available():
         from lib.infer.modules.ipex import ipex_init
+
         ipex_init()
 except Exception:
     pass
@@ -27,14 +30,19 @@ import platform
 syspf = platform.system()
 python_version = "39"
 
+
 def find_python_executable():
-    runtime_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'runtime'))
+    runtime_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "runtime")
+    )
     if os.path.exists(runtime_path):
         logger.info("Current user: Runtime")
         return runtime_path
     elif syspf == "Linux":
         try:
-            result = subprocess.run(["which", "python"], capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ["which", "python"], capture_output=True, text=True, check=True
+            )
             python_path = result.stdout.strip()
             logger.info("Current user: Linux")
             return python_path
@@ -42,8 +50,10 @@ def find_python_executable():
             raise Exception("Could not find the Python path on Linux.")
     elif syspf == "Windows":
         try:
-            result = subprocess.run(["where", "python"], capture_output=True, text=True, check=True)
-            output_lines = result.stdout.strip().split('\n')
+            result = subprocess.run(
+                ["where", "python"], capture_output=True, text=True, check=True
+            )
+            output_lines = result.stdout.strip().split("\n")
             if output_lines:
                 python_path = output_lines[0]
                 python_path = os.path.dirname(python_path)
@@ -55,7 +65,9 @@ def find_python_executable():
             raise Exception("Could not find the Python path on Windows.")
     elif syspf == "Darwin":
         try:
-            result = subprocess.run(["which", "python"], capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ["which", "python"], capture_output=True, text=True, check=True
+            )
             python_path = result.stdout.strip()
             logger.info("Current user: Darwin")
             return python_path
@@ -63,6 +75,7 @@ def find_python_executable():
             raise Exception("Could not find the Python path on macOS.")
     else:
         raise Exception("Operating system not compatible: {syspf}".format(syspf=syspf))
+
 
 python_path = find_python_executable()
 
@@ -132,31 +145,29 @@ class Config:
             action="store_true",
             help="Do not open in browser automatically",
         )
-        parser.add_argument(  
+        parser.add_argument(
             "--paperspace",
             action="store_true",
             help="Note that this argument just shares a gradio link for the web UI. Thus can be used on other non-local CLI systems.",
         )
-        parser.add_argument(  
+        parser.add_argument(
             "--is_cli",
             action="store_true",
             help="Use the CLI instead of setting up a gradio UI. This flag will launch an RVC text interface where you can execute functions from infer-web.py!",
         )
 
         parser.add_argument(
-                    "-t",
-                    "--theme",
-            help    = "Theme for Gradio. Format - `JohnSmith9982/small_and_pretty` (no backticks)",
-            default = "JohnSmith9982/small_and_pretty",
-            type    = str
+            "-t",
+            "--theme",
+            help="Theme for Gradio. Format - `JohnSmith9982/small_and_pretty` (no backticks)",
+            default="JohnSmith9982/small_and_pretty",
+            type=str,
         )
 
         parser.add_argument(
-            "--dml",
-            action="store_true",
-            help="Use DirectML backend instead of CUDA."
+            "--dml", action="store_true", help="Use DirectML backend instead of CUDA."
         )
-        
+
         cmd_opts = parser.parse_args()
 
         cmd_opts.port = cmd_opts.port if 0 <= cmd_opts.port <= 65535 else 7865
@@ -184,7 +195,7 @@ class Config:
             return True
         except Exception:
             return False
-        
+
     @staticmethod
     def has_xpu() -> bool:
         if hasattr(torch, "xpu") and torch.xpu.is_available():
@@ -274,27 +285,37 @@ class Config:
                 x_query = 2
                 x_center = 16
                 x_max = 18
-        
+
         if self.dml:
             logger.info("Use DirectML instead")
-            directml_dll_path = os.path.join(python_path, "Lib", "site-packages", "onnxruntime", "capi", "DirectML.dll")
-            if (
-                os.path.exists(
-                    directml_dll_path
-                )
-                == False
-            ):
+            directml_dll_path = os.path.join(
+                python_path,
+                "Lib",
+                "site-packages",
+                "onnxruntime",
+                "capi",
+                "DirectML.dll",
+            )
+            if os.path.exists(directml_dll_path) == False:
                 try:
                     os.rename(
-                        os.path.join(python_path, "Lib", "site-packages", "onnxruntime"),
-                        os.path.join(python_path, "Lib", "site-packages", "onnxruntime-cuda"),
+                        os.path.join(
+                            python_path, "Lib", "site-packages", "onnxruntime"
+                        ),
+                        os.path.join(
+                            python_path, "Lib", "site-packages", "onnxruntime-cuda"
+                        ),
                     )
                 except:
                     pass
                 try:
                     os.rename(
-                        os.path.join(python_path, "Lib", "site-packages", "onnxruntime-dml"),
-                        os.path.join(python_path, "Lib", "site-packages", "onnxruntime"),
+                        os.path.join(
+                            python_path, "Lib", "site-packages", "onnxruntime-dml"
+                        ),
+                        os.path.join(
+                            python_path, "Lib", "site-packages", "onnxruntime"
+                        ),
                     )
                 except:
                     pass
@@ -306,24 +327,34 @@ class Config:
         else:
             if self.instead:
                 logger.info(f"Use {self.instead} instead")
-            providers_cuda_dll_path = os.path.join(python_path, "Lib", "site-packages", "onnxruntime", "capi", "onnxruntime_providers_cuda.dll")
-            if (
-                os.path.exists(
-                    providers_cuda_dll_path
-                )
-                == False
-            ):
+            providers_cuda_dll_path = os.path.join(
+                python_path,
+                "Lib",
+                "site-packages",
+                "onnxruntime",
+                "capi",
+                "onnxruntime_providers_cuda.dll",
+            )
+            if os.path.exists(providers_cuda_dll_path) == False:
                 try:
                     os.rename(
-                        os.path.join(python_path, "Lib", "site-packages", "onnxruntime"),
-                        os.path.join(python_path, "Lib", "site-packages", "onnxruntime-dml"),
+                        os.path.join(
+                            python_path, "Lib", "site-packages", "onnxruntime"
+                        ),
+                        os.path.join(
+                            python_path, "Lib", "site-packages", "onnxruntime-dml"
+                        ),
                     )
                 except:
                     pass
                 try:
                     os.rename(
-                        os.path.join(python_path, "Lib", "site-packages", "onnxruntime-cuda"),
-                        os.path.join(python_path, "Lib", "site-packages", "onnxruntime"),
+                        os.path.join(
+                            python_path, "Lib", "site-packages", "onnxruntime-cuda"
+                        ),
+                        os.path.join(
+                            python_path, "Lib", "site-packages", "onnxruntime"
+                        ),
                     )
                 except:
                     pass

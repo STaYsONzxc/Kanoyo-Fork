@@ -5,27 +5,56 @@ import subprocess
 import shutil
 import platform
 import logging
+
 logger = logging.getLogger(__name__)
 
 URL_BASE = "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main"
 models_download = [
-    ("pretrained/", [
-        "D32k.pth", "D40k.pth", "D48k.pth",
-        "G32k.pth", "G40k.pth", "G48k.pth",
-        "f0D32k.pth", "f0D40k.pth", "f0D48k.pth",
-        "f0G32k.pth", "f0G40k.pth", "f0G48k.pth",
-    ]),
-    ("pretrained_v2/", [
-        "D32k.pth", "D40k.pth", "D48k.pth",
-        "G32k.pth", "G40k.pth", "G48k.pth",
-        "f0D32k.pth", "f0D40k.pth", "f0D48k.pth",
-        "f0G32k.pth", "f0G40k.pth", "f0G48k.pth",
-    ]),
-    ("uvr5_weights/", [
-        "HP2_all_vocals.pth", "HP3_all_vocals.pth",
-        "HP5_only_main_vocal.pth", "VR-DeEchoAggressive.pth",
-        "VR-DeEchoDeReverb.pth", "VR-DeEchoNormal.pth",
-    ]),
+    (
+        "pretrained/",
+        [
+            "D32k.pth",
+            "D40k.pth",
+            "D48k.pth",
+            "G32k.pth",
+            "G40k.pth",
+            "G48k.pth",
+            "f0D32k.pth",
+            "f0D40k.pth",
+            "f0D48k.pth",
+            "f0G32k.pth",
+            "f0G40k.pth",
+            "f0G48k.pth",
+        ],
+    ),
+    (
+        "pretrained_v2/",
+        [
+            "D32k.pth",
+            "D40k.pth",
+            "D48k.pth",
+            "G32k.pth",
+            "G40k.pth",
+            "G48k.pth",
+            "f0D32k.pth",
+            "f0D40k.pth",
+            "f0D48k.pth",
+            "f0G32k.pth",
+            "f0G40k.pth",
+            "f0G48k.pth",
+        ],
+    ),
+    (
+        "uvr5_weights/",
+        [
+            "HP2_all_vocals.pth",
+            "HP3_all_vocals.pth",
+            "HP5_only_main_vocal.pth",
+            "VR-DeEchoAggressive.pth",
+            "VR-DeEchoDeReverb.pth",
+            "VR-DeEchoNormal.pth",
+        ],
+    ),
     ("", ["ffmpeg.exe", "ffprobe.exe"]),  # ffmpeg and ffprobe go to the main folder
 ]
 
@@ -44,29 +73,38 @@ folder_mapping = {
     "": "",  # Default folder for files without a remote folder
 }
 
+
 # Function to download a file with tqdm progress bar
 def download_file_with_progress(url, destination_path):
     response = requests.get(url, stream=True)
     total_size = int(response.headers.get("content-length", 0))
     block_size = 1024  # 1 KB blocks
 
-    with open(destination_path, 'wb') as file, tqdm(
-            desc=os.path.basename(destination_path),
-            total=total_size,
-            unit='B',
-            unit_scale=True,
-            unit_divisor=1024,
+    with open(destination_path, "wb") as file, tqdm(
+        desc=os.path.basename(destination_path),
+        total=total_size,
+        unit="B",
+        unit_scale=True,
+        unit_divisor=1024,
     ) as bar:
         for data in response.iter_content(block_size):
             file.write(data)
             bar.update(len(data))
+
 
 # Download torch crepe if not exists
 if not os.path.exists("torchcrepe"):
     os_name = platform.system()
     # Cloning the GitHub repository into the temporary directory
     print("Cloning the GitHub repository into the temporary directory...")
-    subprocess.run(["git", "clone", "https://github.com/maxrmorrison/torchcrepe.git", "temp_torchcrepe"])
+    subprocess.run(
+        [
+            "git",
+            "clone",
+            "https://github.com/maxrmorrison/torchcrepe.git",
+            "temp_torchcrepe",
+        ]
+    )
 
     # Copying the torchcrepe folder to a different location
     print("Copying the torchcrepe folder...")
@@ -97,7 +135,6 @@ for file_name, local_folder in individual_files:
     if not os.path.exists(destination_path):
         print(f"Downloading {url} to {destination_path}...")
         download_file_with_progress(url, destination_path)  # Use the function tdqm
-        
-os.system('cls' if os.name == 'nt' else 'clear')
-logger.info("Applio download suscessfully continuing...")
 
+os.system("cls" if os.name == "nt" else "clear")
+logger.info("Applio download suscessfully continuing...")

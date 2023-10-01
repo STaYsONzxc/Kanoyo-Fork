@@ -40,6 +40,8 @@ VOICE_LIST = (
     + "readaloud/voices/list?trustedclienttoken="
     + "6A5AA1D4EAFF4E9FB37E23D68491D6F4"
 )
+
+
 def get_bark_voice():
     mensaje = """
 v2/en_speaker_0	English	Male
@@ -184,9 +186,11 @@ v2/tr_speaker_9	Turkish	Male
 
     return datos_deseados
 
+
 # ||-----------------------------------------------------------------------------------||
 # ||                         Obtained from dependency edge_tts                         ||
 # ||-----------------------------------------------------------------------------------||
+
 
 async def list_voices(*, proxy: Optional[str] = None) -> Any:
     """
@@ -220,25 +224,29 @@ async def list_voices(*, proxy: Optional[str] = None) -> Any:
         ) as url:
             data = json.loads(await url.text())
     return data
-async def create(custom_voices: Optional[List[Dict[str, Any]]] = None) -> List[Dict[str, Any]]:
+
+
+async def create(
+    custom_voices: Optional[List[Dict[str, Any]]] = None
+) -> List[Dict[str, Any]]:
     """
     Creates a list of voices with all available voices and their attributes.
     """
     voices = await list_voices() if custom_voices is None else custom_voices
     voices = [
-        {**voice, **{"Language": voice["Locale"].split("-")[0]}}
-        for voice in voices
+        {**voice, **{"Language": voice["Locale"].split("-")[0]}} for voice in voices
     ]
     simplified_voices = [
-        {'ShortName': voice['ShortName'], 'Gender': voice['Gender']}
-        for voice in voices
+        {"ShortName": voice["ShortName"], "Gender": voice["Gender"]} for voice in voices
     ]
     return simplified_voices
+
 
 async def loop_main():
     voices = await create()
     voices_json = json.dumps(voices)
     return voices_json
+
 
 def get_edge_voice():
     loop = asyncio.get_event_loop()
@@ -246,15 +254,17 @@ def get_edge_voice():
     voices = json.loads(voices_json)
     tts_voice = []
     for voice in voices:
-        short_name = voice['ShortName']
-        gender = voice['Gender']
+        short_name = voice["ShortName"]
+        gender = voice["Gender"]
         formatted_entry = f"{short_name}-{gender}"
         tts_voice.append(formatted_entry)
-       # print(f"{short_name}-{gender}")
+    # print(f"{short_name}-{gender}")
     return tts_voice
+
 
 set_bark_voice = get_bark_voice()
 set_edge_voice = get_edge_voice()
+
 
 def update_tts_methods_voice(select_value):
     # ["Edge-tts", "RVG-tts", "Bark-tts"]
@@ -374,14 +384,17 @@ def use_tts(
     output_count = 1  # Contador para nombres de archivo únicos
 
     while True:
-        converted_tts_filename = os.path.join(output_folder, f"tts_out_{output_count}.wav")
+        converted_tts_filename = os.path.join(
+            output_folder, f"tts_out_{output_count}.wav"
+        )
         bark_out_filename = os.path.join(output_folder, f"bark_out_{output_count}.wav")
-        
-        if not os.path.exists(converted_tts_filename) and not os.path.exists(bark_out_filename):
+
+        if not os.path.exists(converted_tts_filename) and not os.path.exists(
+            bark_out_filename
+        ):
             break
         output_count += 1
-    
-    
+
     if "SET_LIMIT" == os.getenv("DEMO"):
         if len(tts_text) > 60:
             tts_text = tts_text[:60]
@@ -408,7 +421,7 @@ def use_tts(
                 tts = gTTS("a", lang=language)
                 tts.save(converted_tts_filename)
                 print("Error: Audio will be replaced.")
-        
+
         try:
             vc.get_vc(model_path)
             info_, (sample_, audio_output_) = vc.vc_single_dont_save(
@@ -433,8 +446,10 @@ def use_tts(
             )
 
             # Genera un nombre de archivo único para el archivo procesado por vc.vc_single_dont_save
-            vc_output_filename = os.path.join(output_folder, f"converted_tts_{output_count}.wav")
-            
+            vc_output_filename = os.path.join(
+                output_folder, f"converted_tts_{output_count}.wav"
+            )
+
             # Guarda el archivo de audio procesado por vc.vc_single_dont_save
             wavfile.write(
                 vc_output_filename,
@@ -442,7 +457,7 @@ def use_tts(
                 data=audio_output_,
             )
 
-            return vc_output_filename,converted_tts_filename
+            return vc_output_filename, converted_tts_filename
         except Exception as e:
             print(f"{e}")
             return None, None
@@ -459,7 +474,9 @@ def use_tts(
                 pieces += [audio_array, silence.copy()]
 
             sf.write(
-                file=bark_out_filename, samplerate=SAMPLE_RATE, data=np.concatenate(pieces)
+                file=bark_out_filename,
+                samplerate=SAMPLE_RATE,
+                data=np.concatenate(pieces),
             )
             vc.get_vc(model_path)
             info_, (sample_, audio_output_) = vc.vc_single_dont_save(
@@ -485,9 +502,11 @@ def use_tts(
                 f0_max=1100,
                 note_max=1100,
             )
-            
-            vc_output_filename = os.path.join(output_folder, f"converted_bark_{output_count}.wav")
-            
+
+            vc_output_filename = os.path.join(
+                output_folder, f"converted_bark_{output_count}.wav"
+            )
+
             # Guarda el archivo de audio procesado por vc.vc_single_dont_save
             wavfile.write(
                 vc_output_filename,

@@ -17,12 +17,15 @@ n_gpus = len(hps.gpus.split("-"))
 from random import randint, shuffle
 
 import torch
+
 try:
-    import intel_extension_for_pytorch as ipex # pylint: disable=import-error, unused-import
+    import intel_extension_for_pytorch as ipex  # pylint: disable=import-error, unused-import
+
     if torch.xpu.is_available():
         from lib.infer.modules.ipex import ipex_init
         from lib.infer.modules.ipex.gradscaler import gradscaler_init
         from torch.xpu.amp import autocast
+
         GradScaler = gradscaler_init()
         ipex_init()
     else:
@@ -54,7 +57,9 @@ from lib.infer.infer_libs.train.data_utils import (
 
 if hps.version == "v1":
     from lib.infer.infer_libs.infer_pack.models import MultiPeriodDiscriminator
-    from lib.infer.infer_libs.infer_pack.models import SynthesizerTrnMs256NSFsid as RVC_Model_f0
+    from lib.infer.infer_libs.infer_pack.models import (
+        SynthesizerTrnMs256NSFsid as RVC_Model_f0,
+    )
     from lib.infer.infer_libs.infer_pack.models import (
         SynthesizerTrnMs256NSFsid_nono as RVC_Model_nof0,
     )
@@ -71,11 +76,15 @@ from lib.infer.infer_libs.train.losses import (
     generator_loss,
     kl_loss,
 )
-from lib.infer.infer_libs.train.mel_processing import mel_spectrogram_torch, spec_to_mel_torch
+from lib.infer.infer_libs.train.mel_processing import (
+    mel_spectrogram_torch,
+    spec_to_mel_torch,
+)
 from lib.infer.infer_libs.train.process_ckpt import savee
 
 global_step = 0
 import csv
+
 
 class EpochRecorder:
     def __init__(self):
@@ -89,10 +98,12 @@ class EpochRecorder:
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         return f"[{current_time}] | ({elapsed_time_str})"
 
+
 def reset_stop_flag():
     with open("lib/csvdb/stop.csv", "w+", newline="") as STOPCSVwrite:
         csv_writer = csv.writer(STOPCSVwrite, delimiter=",")
         csv_writer.writerow(["False"])
+
 
 def create_model(hps, model_f0, model_nof0):
     filter_length_adjusted = hps.data.filter_length // 2 + 1
@@ -107,14 +118,16 @@ def create_model(hps, model_f0, model_nof0):
         segment_size_adjusted,
         **hps.model,
         is_half=is_half,
-        sr=sr
+        sr=sr,
     )
+
 
 def move_model_to_cuda_if_available(model, rank):
     if torch.cuda.is_available():
         return model.cuda(rank)
     else:
         return model
+
 
 def create_optimizer(model, hps):
     return torch.optim.AdamW(
@@ -124,25 +137,33 @@ def create_optimizer(model, hps):
         eps=hps.train.eps,
     )
 
+
 def create_ddp_model(model, rank):
     if torch.cuda.is_available():
         return DDP(model, device_ids=[rank])
     else:
         return DDP(model)
 
+
 def create_dataset(hps, if_f0=True):
-    return TextAudioLoaderMultiNSFsid(hps.data.training_files, hps.data) if if_f0 else TextAudioLoader(hps.data.training_files, hps.data)
+    return (
+        TextAudioLoaderMultiNSFsid(hps.data.training_files, hps.data)
+        if if_f0
+        else TextAudioLoader(hps.data.training_files, hps.data)
+    )
+
 
 def create_sampler(dataset, batch_size, n_gpus, rank):
     return DistributedBucketSampler(
-            dataset,
-            batch_size * n_gpus,
-            # [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1200,1400],  # 16s
-            [100, 200, 300, 400, 500, 600, 700, 800, 900],  # 16s
-            num_replicas=n_gpus,
-            rank=rank,
-            shuffle=True,
-        )
+        dataset,
+        batch_size * n_gpus,
+        # [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1200,1400],  # 16s
+        [100, 200, 300, 400, 500, 600, 700, 800, 900],  # 16s
+        num_replicas=n_gpus,
+        rank=rank,
+        shuffle=True,
+    )
+
 
 def set_collate_fn(if_f0=True):
     return TextAudioCollateMultiNSFsid() if if_f0 else TextAudioCollate()
@@ -278,7 +299,7 @@ def run(rank, n_gpus, hps):
         # epoch_str = 1
         # global_step = 0
     except:  # 如果首次不能加载，加载pretrain
-        os.system('cls' if os.name == 'nt' else 'clear')
+        os.system("cls" if os.name == "nt" else "clear")
         epoch_str = 1
         global_step = 0
         if hps.pretrainG != "":
@@ -672,19 +693,24 @@ def train_and_evaluate(
                     ),
                 )
             )
-    
+
     stopbtn = False
     try:
-        with open("lib/csvdb/stop.csv", 'r') as csv_file:
+        with open("lib/csvdb/stop.csv", "r") as csv_file:
             stopbtn_str = next(csv.reader(csv_file), [None])[0]
-            if stopbtn_str is not None: stopbtn = stopbtn_str.lower() == 'true'
+            if stopbtn_str is not None:
+                stopbtn = stopbtn_str.lower() == "true"
     except (ValueError, TypeError, FileNotFoundError, IndexError) as e:
         print(f"Handling exception: {e}")
         stopbtn = False
 
     if stopbtn:
         logger.info("Stop Button was pressed. The program is closed.")
-        ckpt = net_g.module.state_dict() if hasattr(net_g, "module") else net_g.state_dict()
+        ckpt = (
+            net_g.module.state_dict()
+            if hasattr(net_g, "module")
+            else net_g.state_dict()
+        )
         logger.info(
             "saving final ckpt:%s"
             % (

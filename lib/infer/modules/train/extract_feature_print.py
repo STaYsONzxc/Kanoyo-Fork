@@ -2,6 +2,7 @@ import os
 import sys
 import traceback
 import tqdm
+
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 os.environ["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] = "0.0"
 
@@ -76,7 +77,7 @@ def readwave(wav_path, normalize=False):
 
 
 # HuBERT model
-os.system('cls' if os.name == 'nt' else 'clear')
+os.system("cls" if os.name == "nt" else "clear")
 print("Starting feature extraction...\n")
 printt("Loaded model {}".format(model_path))
 # if hubert model is exist
@@ -100,8 +101,10 @@ model.eval()
 todo = sorted(list(os.listdir(wavPath)))[i_part::n_part]
 n = max(1, len(todo) // 10)  # 最多打印十条
 if len(todo) == 0:
-    os.system('cls' if os.name == 'nt' else 'clear')
-    printt("An error occurred in the feature extraction, make sure you have provided the audios correctly.")
+    os.system("cls" if os.name == "nt" else "clear")
+    printt(
+        "An error occurred in the feature extraction, make sure you have provided the audios correctly."
+    )
 else:
     printt("- %s" % len(todo))
     with tqdm.tqdm(total=len(todo)) as pbar:
@@ -126,7 +129,9 @@ else:
                     with torch.no_grad():
                         logits = model.extract_features(**inputs)
                         feats = (
-                            model.final_proj(logits[0]) if version == "v1" else logits[0]
+                            model.final_proj(logits[0])
+                            if version == "v1"
+                            else logits[0]
                         )
 
                     feats = feats.squeeze(0).float().cpu().numpy()
@@ -136,7 +141,9 @@ else:
                         printt("%s-contains nan" % file)
                     # if idx % n == 0:
                     #     printt("now-%s,all-%s,%s,%s" % (idx, len(todo), file, feats.shape))
-                    pbar.set_description(f"Processing: %s - Shape: %s" % (file, feats.shape))
+                    pbar.set_description(
+                        f"Processing: %s - Shape: %s" % (file, feats.shape)
+                    )
             except:
                 printt(traceback.format_exc())
             pbar.update(1)

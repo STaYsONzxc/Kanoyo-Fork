@@ -50,7 +50,9 @@ def get_f0_predictor(f0_predictor, hop_length, sampling_rate, **kargs):
             hop_length=hop_length, sampling_rate=sampling_rate
         )
     elif f0_predictor == "dio":
-        from lib.infer.infer_pack.modules.F0Predictor.DioF0Predictor import DioF0Predictor
+        from lib.infer.infer_pack.modules.F0Predictor.DioF0Predictor import (
+            DioF0Predictor,
+        )
 
         f0_predictor_object = DioF0Predictor(
             hop_length=hop_length, sampling_rate=sampling_rate

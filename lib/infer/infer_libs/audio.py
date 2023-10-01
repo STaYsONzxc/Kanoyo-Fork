@@ -8,47 +8,59 @@ import sys
 
 import random
 from lib.infer.infer_libs.csvutil import CSVutil
-#import csv
+
+# import csv
 
 platform_stft_mapping = {
-    'linux': 'stftpitchshift',
-    'darwin': 'stftpitchshift',
-    'win32': 'stftpitchshift.exe',
+    "linux": "stftpitchshift",
+    "darwin": "stftpitchshift",
+    "win32": "stftpitchshift.exe",
 }
 
 stft = platform_stft_mapping.get(sys.platform)
 
+
 def wav2(i, o, format):
-    inp = av.open(i, 'rb')
-    if format == "m4a": format = "mp4"
-    out = av.open(o, 'wb', format=format)
-    if format == "ogg": format = "libvorbis"
-    if format == "mp4": format = "aac"
+    inp = av.open(i, "rb")
+    if format == "m4a":
+        format = "mp4"
+    out = av.open(o, "wb", format=format)
+    if format == "ogg":
+        format = "libvorbis"
+    if format == "mp4":
+        format = "aac"
 
     ostream = out.add_stream(format)
 
     for frame in inp.decode(audio=0):
-        for p in ostream.encode(frame): out.mux(p)
+        for p in ostream.encode(frame):
+            out.mux(p)
 
-    for p in ostream.encode(None): out.mux(p)
+    for p in ostream.encode(None):
+        out.mux(p)
 
     out.close()
     inp.close()
 
+
 def audio2(i, o, format, sr):
-    inp = av.open(i, 'rb')
-    out = av.open(o, 'wb', format=format)
-    if format == "ogg": format = "libvorbis"
-    if format == "f32le": format = "pcm_f32le"
+    inp = av.open(i, "rb")
+    out = av.open(o, "wb", format=format)
+    if format == "ogg":
+        format = "libvorbis"
+    if format == "f32le":
+        format = "pcm_f32le"
 
     ostream = out.add_stream(format, channels=1)
     ostream.sample_rate = sr
 
     for frame in inp.decode(audio=0):
-        for p in ostream.encode(frame): out.mux(p)
+        for p in ostream.encode(frame):
+            out.mux(p)
 
     out.close()
     inp.close()
+
 
 def load_audion(file, sr):
     try:
@@ -70,23 +82,25 @@ def load_audion(file, sr):
         raise RuntimeError(f"Failed to load audio: {e}")
 
 
-
-
 def load_audio(file, sr, DoFormant=False, Quefrency=1.0, Timbre=1.0):
     converted = False
-    DoFormant, Quefrency, Timbre = CSVutil("lib/csvdb/formanting.csv", "r", "formanting")
+    DoFormant, Quefrency, Timbre = CSVutil(
+        "lib/csvdb/formanting.csv", "r", "formanting"
+    )
     DoFormant, Quefrency, Timbre = bool(DoFormant), float(Quefrency), float(Timbre)
-    
+
     try:
         file = file.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
-        
+
         if not file.endswith(".wav"):
             converted = True
             # Conversión de formato usando ffmpeg
             converting = (
                 ffmpeg.input(file, threads=0)
                 .output(f"{file}.wav")
-                .run(cmd=["ffmpeg", "-nostdin"], capture_stdout=True, capture_stderr=True)
+                .run(
+                    cmd=["ffmpeg", "-nostdin"], capture_stdout=True, capture_stderr=True
+                )
             )
             file = f"{file}.wav"
             print(f" · File converted to Wav format: {file}\n")
@@ -107,8 +121,11 @@ def load_audio(file, sr, DoFormant=False, Quefrency=1.0, Timbre=1.0):
                 audio_data = np.frombuffer(out.getvalue(), np.float32).flatten()
 
         if converted:
-            try: os.remove(file)
-            except Exception as e: pass; print(f"Couldn't remove converted type of file due to {e}")
+            try:
+                os.remove(file)
+            except Exception as e:
+                pass
+                print(f"Couldn't remove converted type of file due to {e}")
             converted = False
 
         return audio_data
@@ -127,7 +144,7 @@ def check_audio_duration(file):
 
         probe = ffmpeg.probe(file)
 
-        duration = float(probe['streams'][0]['duration'])
+        duration = float(probe["streams"][0]["duration"])
 
         if duration < 0.76:
             print(

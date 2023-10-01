@@ -195,6 +195,7 @@ class ToolButton(gr.Button, gr.components.FormComponent):
     def get_block_name(self):
         return "button"
 
+
 import lib.infer.infer_libs.uvr5_pack.mdx as mdx
 from lib.infer.modules.uvr5.mdxprocess import (
     get_model_list,
@@ -1732,7 +1733,7 @@ def GradioSetup():
                         fn=lambda: ({"value": "", "__type__": "update"}),
                         inputs=[],
                         outputs=[sid0],
-                        api_name="infer_clean"
+                        api_name="infer_clean",
                     )
 
                 with gr.TabItem(i18n("Single")):
@@ -1800,7 +1801,7 @@ def GradioSetup():
                                 fn=change_choices,
                                 inputs=[],
                                 outputs=[sid0, file_index2, input_audio1],
-                                api_name="infer_refresh"
+                                api_name="infer_refresh",
                             )
                     # Create a checkbox for advanced settings
                     advanced_settings_checkbox = gr.Checkbox(
@@ -1837,7 +1838,8 @@ def GradioSetup():
                                     label="Enable autotune", interactive=True
                                 )
                                 split_audio = gr.Checkbox(
-                                    label="Split Audio (Better Results)", interactive=True
+                                    label="Split Audio (Better Results)",
+                                    interactive=True,
                                 )
                                 format1_ = gr.Radio(
                                     label=i18n("Export file format:"),
