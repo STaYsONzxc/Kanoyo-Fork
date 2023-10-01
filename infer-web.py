@@ -2860,7 +2860,7 @@ def GradioRun(app):
             server_port=config.listen_port,
             quiet=True,
             favicon_path="./assets/images/icon.png",
-            share=share_gradio_link,
+            share=False,
         )
     else:
         app.queue(concurrency_count=concurrency_count, max_size=max_size).launch(
